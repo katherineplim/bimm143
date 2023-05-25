@@ -4,3 +4,5 @@ author: "Katherine Lim (A15900881)"
 format: html
 ---
 
+This is a first line of text and here
+is another line of text
