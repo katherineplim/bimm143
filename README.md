@@ -7,4 +7,4 @@ From class [BIMM143](https://bioboot.github.io/bimm143_S23/)
 
 - Class 06: **R Functions** [source code](https://github.com/katherineplim/bimm143/blob/main/class06lab.pdf)
 
-- Class 07: **CLustering and Principle Component Analysis** [source code](https://github.com/katherineplim/bimm143/blob/main/class07.pdf)
+- Class 07: **Clustering and Principle Component Analysis** [source code](https://github.com/katherineplim/bimm143/blob/main/class07.pdf)
