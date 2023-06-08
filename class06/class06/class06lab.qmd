@@ -1,0 +1,97 @@
+---
+title: "Class 06: R Functions Lab"
+author: "Katherine Lim (A15900881)"
+format: html
+editor: visual
+---
+
+```{r}
+# Example students to test the function on
+student1 <- c(100, 100, 100, 100, 100, 100, 100, 90)
+student2 <- c(100, NA, 90, 90, 90, 90, 97, 80)
+student3 <- c(90, NA, NA, NA, NA, NA, NA, NA)
+```
+
+**Q1.** Write a function grade() to determine an overall grade from a vector of student homework assignment scores dropping the lowest single score. If a student misses a homework (i.e. has an NA value) this can be used as a score to be potentially dropped. Your final function should be adequately explained with code comments and be able to work on an example class gradebook such as this one in CSV format: "https://tinyurl.com/gradeinput" \[3pts\]
+
+```{r}
+grade <- function(scores) {
+  
+  # This will replace NA scores with 0
+  scores[is.na(scores)] <- 0
+  
+  # This will drop the lowest single score
+  scores <- scores[-which.min(scores)]
+  
+  # This will get the average of the remaining scores
+  avg_score <- mean(scores)
+  
+  # Return the average score
+  return(avg_score)
+}
+```
+
+```{r}
+# This will read in the class data from CSV
+url <- 'https://tinyurl.com/gradeinput'
+scores <- read.csv(url, row.names = 1)
+head(scores)
+```
+
+```{r}
+# This will apply the grade function to the gradebook
+apply(scores, 1, grade)
+```
+
+**Q2.** Using your grade() function and the supplied gradebook, Who is the top scoring student overall in the gradebook? \[3pts\]
+
+```{r}
+# Return the student with the highest overall grade in the gradebook
+  gradebook <- apply(scores, 1, grade)
+  
+  # Find the student with the highest average grade after dropping the lowest score
+  top_student <- gradebook[which.max(gradebook)]
+  
+  # Return the top student
+  top_student
+```
+
+**Q3.** From your analysis of the gradebook, which homework was toughest on students (i.e. obtained the lowest scores overall? \[2pts\]
+
+```{r}
+# Return the homework assignment with the lowest average grade
+  
+  # Count NA scores as a 0
+  NA_to_zero <- function(scores) {
+    scores[is.na(scores)] <- 0
+    return(scores)
+  }
+  
+  # Find the average score for each homework assignment
+  hw_avg <- colMeans(NA_to_zero(scores))
+  
+  # Find which homework assignment had the lowest average score
+  lowest_hw <- hw_avg[which.min(hw_avg)]
+  
+  # Return the homework assignment with the lowest score
+  lowest_hw
+  
+```
+
+**Q4.** Which homework was most predictive of overall score (i.e. highest correlation with average grade score)?
+
+```{r}
+# Return the homework assignment with the highest correlation to the overall average grade
+
+  # Count NA scores as a 0
+  mask <- scores
+  mask[is.na(mask)] <- 0
+  
+  # Find the correlation between each homework assignment and the student's final grade
+  correlation <- apply(mask, 2, cor, y=gradebook)
+  
+  # Return the homework assignment with the highest correlation to the overall average grade
+  highest_cor <- correlation[which.max(correlation)]
+  highest_cor
+
+```

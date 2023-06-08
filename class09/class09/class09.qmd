@@ -1,0 +1,95 @@
+---
+title: "Class 09: Structural Bioinformatics (AlphaFold2)"
+author: "Katherine Lim (A15900881)"
+format: pdf
+---
+
+```{r}
+db <- read.csv("DataExportSummary.csv")
+db
+```
+
+> Q1: What percentage of structures in the PDB are solved by X-Ray and Electron Microscopy?
+
+```{r}
+# This function gets the sum of a column from the db file.
+sum_comma <- function(x) {
+  result <- sum(as.numeric(gsub(",", "", x)))
+  result
+}
+```
+
+For X-ray:
+
+```{r}
+round(sum_comma(db$X.ray) / sum_comma(db$Total), 2)
+```
+
+For EM:
+
+```{r}
+round(sum_comma(db$EM) / sum_comma(db$Total), 2)
+```
+
+> Q2: What proportion of structures in the PDB are protein?
+
+```{r}
+round(sum_comma(db$Total[1]) / sum_comma(db$Total), 2)
+```
+
+> Q3: Type HIV in the PDB website search box on the home page and determine how many HIV-1 protease structures are in the current PDB.
+
+Skipped.
+
+> Q4: Water molecules normally have 3 atoms. Why do we see just one atom per water molecule in this structure?
+
+Water molecules are extremely small so are represented by only one atom (oxygen). The structure is too low resolution to see H atoms. You need a sub 1 Angstrom resolution in order to see H atoms.
+
+> Q5: There is a critical "conserved" water molecule in the binding site. Can you identify this water molecule? What residue number does this water molecule have
+
+The residue number is HOH308.
+
+> Q6: Generate and save a figure clearly showing the two distinct chains of HIV-protease along with the ligand.
+
+![HIV-PR structure from MERK with a bound drug](1HSG.png)
+
+# Working with Structures in R
+
+We can use the `bio3d` package to read and perform bioinformatics calculations on PDB structures.
+
+```{r}
+library(bio3d)
+
+pdb <- read.pdb("1hsg")
+pdb
+```
+
+```{r}
+attributes(pdb)
+```
+
+```{r}
+head(pdb$atom)
+```
+
+Read an ADK structure:
+
+```{r}
+adk <- read.pdb("6s36")
+adk
+```
+
+Perform a predication of flexibility with a technique called NMA (normal mode analysis): 
+
+```{r}
+# Perform flexibility predication
+m <- nma(adk)
+plot(m)
+```
+
+Write out a "movie" of the motion for viewing in MolStar.
+
+```{r}
+mktrj(m, file = "adk_m7.pdb")
+```
+

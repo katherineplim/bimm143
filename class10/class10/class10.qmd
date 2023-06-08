@@ -1,0 +1,96 @@
+---
+title: "Class 10: Structural Bioinformatics (Part II)"
+author: "Katherine Lim A15900881"
+format: pdf
+---
+
+# Comparative analysis of ADK
+
+Adenylate kinase (ADK) is an important drug target and we would love to know how it works (i.e. molecular mechanism).
+
+There has been a lot of work done on this protein due to its importance including lots of crystal structures.
+
+We will begin with getting an example ADK sequence from the database. We will then use this to find all ADK structures in the PDB.
+
+```{r}
+library(bio3d)
+aa <- get.seq("1ake_A")
+aa
+```
+
+We can now run BLAST.
+
+```{r}
+# Blast search 
+#b <- blast.pdb(aa)
+```
+
+```{r}
+# Plot a summary of search results
+#hits <- plot(b)
+
+hits <- NULL
+hits$pdb.id <- c('1AKE_A','6S36_A','6RZE_A','3HPR_A','1E4V_A','5EJE_A','1E4Y_A','3X2S_A','6HAP_A','6HAM_A','4K46_A','3GMT_A','4PZL_A')
+```
+
+Let's see what's in our `hits` object.
+
+```{r}
+#hits$pdb.id
+```
+
+Now we can download all these PDB structure files.
+
+```{r}
+# Download related PDB files
+files <- get.pdb(hits$pdb.id, path = "pdbs", split = TRUE, gzip = TRUE)
+```
+
+```{r}
+files
+```
+
+Now I want to align and superpose these structures which are all over the place. 
+
+```{r}
+# Align related PDBs
+pdbs <- pdbaln(files, fit = TRUE, exefile = "msa")
+```
+
+Let's have a look at our `pdbs` object.
+
+```{r}
+pdbs
+```
+
+Now that we have our aligned and superposed structures we can perform all sorts of analyses on them. Let's first do PCA.
+
+```{r}
+# Perform PCA
+pc.xray <- pca(pdbs)
+plot(pc.xray)
+```
+
+Results of PCA on Adenylate kinase X-ray structures. Each dot represents one PDB structure.
+
+We can cluster the structures by RMSD (or any other method). 
+
+```{r}
+# Calculate RMSD
+rd <- rmsd(pdbs)
+
+# Structure-based clustering
+hc.rd <- hclust(dist(rd))
+grps.rd <- cutree(hc.rd, k = 3)
+
+plot(pc.xray, 1:2, col = "grey50", bg = grps.rd, pch = 21, cex = 1)
+```
+
+We can make a movie (also called a trajectory of the major differences, i.e. structural displacements) of ADK. 
+
+```{r}
+# Visualize first principal component
+pc1 <- mktrj(pc.xray, pc = 1, file = "pc_1.pdb")
+```
+
+
