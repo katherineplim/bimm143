@@ -6,3 +6,14 @@ format: html
 
 This is a first line of text and here
 is another line of text
+
+```{r}
+library(usethis)
+create_github_token()
+```
+
+```{r}
+library(gitcreds)
+gitcreds_set()
+```
+
