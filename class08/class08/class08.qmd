@@ -1,0 +1,266 @@
+---
+title: "Class 08: Machine Learning Mini Project"
+author: "Katherine Lim (A15900881)"
+format: pdf
+---
+
+# Breast Cancer Project
+Today we are going to explore some data from the University of Wisconsin Cancer Center on breast biopsy data.
+
+# 1. Exploratory data analysis
+
+```{r}
+wisc.df <- read.csv("WisconsinCancer.csv", row.names = 1)
+head(wisc.df)
+```
+```{r}
+# Create diagnosis vector for later 
+diagnosis <- wisc.df$diagnosis
+diagnosis 
+```
+
+```{r}
+# We can use -1 here to remove the first column
+wisc.data <- wisc.df[,-1]
+```
+
+> Q1. How many patient samples are in this dataset?
+
+```{r}
+nrow(wisc.data)
+```
+
+There are `r nrow(wisc.data)` patients in this dataset.
+
+> Q2. How many cancer (M) and non-cancer (B) samples are there?
+
+```{r}
+table(wisc.data$diagnosis)
+```
+
+There are 212 cancer and 357 non-cancer samples in this dataset.
+
+```{r}
+# Now exclude the diagnosis column from the data.
+wisc <- wisc.data[, -1]
+```
+
+> Q3. How many "dimensions", "variable", "columns" are there in this dataset?
+
+```{r}
+ncol(wisc)
+```
+
+# 2. Principal Component Analysis (PCA)
+
+```{r}
+# Check column means and standard deviations
+colMeans(wisc.data)
+
+apply(wisc.data, 2, sd)
+```
+
+To perform PCA in R we can use the `prcomp()` function. It takes a numeric dataset as input and the optional `scale = TRUE/FALSE` argument.
+
+We generally always want to set `scale = TRUE` but let's make sure by checking if the mean and standard deviation values are different across there 30 columns.
+
+```{r}
+# Perform PCA on wisc.data 
+pca <- prcomp(wisc.data, scale = TRUE)
+```
+
+```{r}
+# Look at summary of results
+summary(pca)
+```
+
+```{r}
+round(colMeans(wisc.data))
+```
+
+```{r}
+attributes(pca)
+```
+
+> Q4. How much variance is captured in the top 3 PCs?
+
+They capture 76% of the total variance. 
+
+> Q5. How many principal components (PCs) are required to describe at least 70% of the original variance in the data?
+
+```{r}
+# Calculate the proportion of variance explained by each PC
+variance <- pca$sdev^2
+prop_var <- variance / sum(variance)
+
+# Determine the number of PCs required to explain at least 70% of the variance
+cum_prop_var <- cumsum(prop_var)
+num_pcs <- which.max(cum_prop_var >= 0.7)
+num_pcs
+```
+
+3 PCs are required to describe at least 70% of the original variance in the data.
+
+> Q6. How many principal components (PCs) are required to describe at least 90% of the original variance in the data?
+
+```{r}
+# Determine the number of PCs required to explain at least 90% of the variance
+cum_prop_var <- cumsum(prop_var)
+num_pcs <- which.max(cum_prop_var >= 0.9)
+num_pcs
+```
+
+7 PCs are required to describe at least 70% of the original variance in the data.
+
+> Q7. What stands out to you about this plot? Is it easy or difficult to understand? Why?
+
+```{r}
+biplot(pca)
+```
+
+This plot is difficult to understand because there is too much information that is clustered to comprehend. 
+
+```{r}
+# Scatter plot observations by components 1 and 2
+plot(pca$x, col = wisc.data$diagnosis, xlab = "PC1", ylab = "PC2")
+```
+
+```{r}
+# Create a data.frame for ggplot
+df <- as.data.frame(pca$x)
+df$diagnosis <- diagnosis
+
+# Load the ggplot2 package
+library(ggplot2)
+
+# Make a scatter plot colored by diagnosis
+ggplot(df) + 
+  aes(PC1, PC2, col = diagnosis) + 
+  geom_point()
+```
+
+> Q8. Generate a similar plot for principal components 1 and 3. What do you notice about these plots?
+
+```{r}
+plot(pca$x[, 1], col = 3, 
+     xlab = "PC1", ylab = "PC3")
+```
+
+The plots indicate that PC 1 is capturing a separation of malignant (red) from benign (black) samples.
+
+```{r}
+# Create a data.frame for ggplot
+df <- as.data.frame(pca$x)
+df$diagnosis <- diagnosis
+
+# Load the ggplot2 package
+library(ggplot2)
+
+# Make a scatter plot colored by diagnosis
+ggplot(df) + 
+  aes(PC1, PC2, col = diagnosis) + 
+  geom_point()
+```
+
+> Q9. For the first principal component, what is the component of the loading vector (i.e. wisc.pr$rotation[,1]) for the feature concave.points_mean? 
+
+This tells us how much this original feature contributes to the first PC.
+
+```{r}
+pca$rotation["concave.points_mean", 1]
+```
+
+It contributes -0.26.
+
+```{r}
+attributes(pca)
+```
+
+> Q10. What is the minimum number of principal components required to explain 80% of the variance of the data?
+
+```{r}
+# Determine the number of PCs required to explain at least 90% of the variance
+cum_prop_var <- cumsum(prop_var)
+num_pcs <- which.max(cum_prop_var >= 0.8)
+num_pcs
+```
+
+5 PCs are required to describe at least 70% of the original variance in the data.
+
+To get our cluster membership vector we can use the `cutree()` function and specify a height (`h = ___`) or number of groups (`k`).
+
+```{r}
+hc <- hclust(dist(pca$x), method = "complete")
+grps <- cutree(hc, h = 80)
+table(grps)
+```
+
+> Q11. Using the plot() and abline() functions, what is the height at which the clustering model has 4 clusters?
+
+```{r}
+# Plot the dendrogram
+plot(hc)
+
+# Add a horizontal line to indicate 4 clusters
+abline(h = 19, col = "red", lty = 2)
+```
+
+The clustering model has 4 clusters at h = 19.
+
+```{r}
+wisc.hclust.clusters <- cutree(hc, k = 4)
+```
+
+```{r}
+table(wisc.hclust.clusters, diagnosis)
+```
+
+> Q12. Can you find a better cluster vs diagnoses match by cutting into a different number of clusters between 2 and 10?
+
+```{r}
+wisc.hclust.clusters <- cutree(hc, k = 3)
+
+table(wisc.hclust.clusters, diagnosis)
+```
+
+> Q13. Which method gives your favorite results for the same data.dist dataset? Explain your reasoning.
+
+I like results using the "ward.D2" method because it produces clusters of similar size and shape which are easier to visualize and understand.
+
+# Combine PCA results with clustering
+
+We can use our new PCA variables (i.e. the scores along the PCs contained in the `pca$x`) as input for other methods such as clustering.
+
+How to find out how many diagnosis "M" and "B" there are in each group?
+
+```{r}
+table(diagnosis)
+```
+
+```{r}
+table(diagnosis, grps)
+# G1 is labeled as M
+# G2 is labeled as B
+```
+
+We can also plot our results using our clustering vector `grps`.
+
+```{r}
+plot(pca$x[, 1], pca$x[, 2], col = grps)
+```
+
+```{r}
+library(ggplot2)
+
+x <- as.data.frame(pca$x)
+x$diagnosis <- diagnosis
+
+ggplot(x) + 
+  aes(PC1, PC2, col = grps) + 
+  geom_point()
+```
+
+> Q15. What is the sensitivity and specificity of our current results?
+
+Sensitivity = TP/(TP+FN) = 333/(333+33) = 0.91
+Specificity = TN/(TN+FN) = 179/(24+179) = 0.88
